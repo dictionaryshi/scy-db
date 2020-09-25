@@ -1,6 +1,14 @@
 package com.scy.db.util;
 
+import com.scy.core.ObjectUtil;
+import com.scy.core.enums.ResponseCodeEnum;
+import com.scy.core.exception.BusinessException;
+import com.scy.db.mybatis.AutoSwitchDatasourceInterceptor;
 import org.apache.ibatis.session.*;
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.boot.autoconfigure.SpringBootVFS;
+
+import javax.sql.DataSource;
 
 /**
  * SqlSessionFactoryUtil
@@ -11,6 +19,23 @@ import org.apache.ibatis.session.*;
 public class SqlSessionFactoryUtil {
 
     private SqlSessionFactoryUtil() {
+    }
+
+    public static SqlSessionFactory getSqlSessionFactory(DataSource dataSource) throws Exception {
+        SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
+        sqlSessionFactoryBean.setDataSource(dataSource);
+        sqlSessionFactoryBean.setVfs(SpringBootVFS.class);
+
+        sqlSessionFactoryBean.setPlugins(new AutoSwitchDatasourceInterceptor());
+
+        SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBean.getObject();
+
+        if (ObjectUtil.isNull(sqlSessionFactory)) {
+            throw new BusinessException(ResponseCodeEnum.SYSTEM_EXCEPTION.getCode(), "getSqlSessionFactory error");
+        }
+        setDefaultConfiguration(sqlSessionFactory);
+
+        return sqlSessionFactory;
     }
 
     public static void setDefaultConfiguration(SqlSessionFactory sqlSessionFactory) {
