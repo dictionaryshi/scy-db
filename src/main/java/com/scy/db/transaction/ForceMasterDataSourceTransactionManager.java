@@ -21,9 +21,10 @@ public class ForceMasterDataSourceTransactionManager extends DataSourceTransacti
         super(dataSource);
     }
 
-
     @Override
     protected void doBegin(@NonNull Object transaction, @NonNull TransactionDefinition definition) {
+        log.info("transaction begin");
+
         // 事务环境下切换至主库
         ForceMasterHelper.forceMaster();
 
@@ -35,5 +36,7 @@ public class ForceMasterDataSourceTransactionManager extends DataSourceTransacti
         super.doCleanupAfterCompletion(transaction);
 
         ForceMasterHelper.clearForceMaster();
+
+        log.info("transaction finish");
     }
 }
