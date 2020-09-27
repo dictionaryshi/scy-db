@@ -36,7 +36,7 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
 
         checkProperties(dbPropertiesList);
 
-        dbPropertiesList.stream().forEach(this::registry);
+        dbPropertiesList.forEach(this::registry);
     }
 
     private void registry(DbProperties dbProperties) {
