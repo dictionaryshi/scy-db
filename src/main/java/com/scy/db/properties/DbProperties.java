@@ -15,7 +15,7 @@ import lombok.ToString;
 @ToString
 public class DbProperties {
 
-    public static final String PREFIX = "dbConfig";
+    public static final String PREFIX = "db-config";
 
     private String name;
 
