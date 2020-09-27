@@ -6,6 +6,8 @@ import com.scy.core.StringUtil;
 import com.scy.core.enums.ResponseCodeEnum;
 import com.scy.core.exception.BusinessException;
 import com.scy.core.spring.ApplicationContextUtil;
+import com.scy.db.constant.DbConstant;
+import com.scy.db.model.ao.DbRegistryAO;
 import com.scy.db.properties.DbProperties;
 import com.scy.db.properties.DruidDataSourceProperties;
 import org.springframework.beans.BeansException;
@@ -36,10 +38,24 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
 
         checkProperties(dbPropertiesList);
 
-        dbPropertiesList.forEach(this::registry);
+        dbPropertiesList.forEach(dbProperties -> registry(dbProperties, registry));
     }
 
-    private void registry(DbProperties dbProperties) {
+    private void registry(DbProperties dbProperties, BeanDefinitionRegistry registry) {
+        DbRegistryAO dbRegistryAO = new DbRegistryAO();
+        dbRegistryAO.setDbProperties(dbProperties);
+        dbRegistryAO.setRegistry(registry);
+        dbRegistryAO.setMasterBeanName(dbProperties.getName() + DbConstant.DATA_SOURCE_MASTER);
+        dbRegistryAO.setSlaveBeanName(dbProperties.getName() + DbConstant.DATA_SOURCE_SLAVE);
+        dbRegistryAO.setDataSourceBeanName(dbProperties.getName() + DbConstant.DATA_SOURCE);
+        dbRegistryAO.setSqlSessionFactoryBeanName(dbProperties.getName() + DbConstant.SQL_SESSION_FACTORY);
+        dbRegistryAO.setSqlSessionTemplateBeanName(dbProperties.getName() + DbConstant.SQL_SESSION_TEMPLATE);
+        dbRegistryAO.setTransactionManagerBeanName(dbProperties.getName() + DbConstant.TRANSACTION_MANAGER);
+
+        registryDruid(dbRegistryAO);
+    }
+
+    private void registryDruid(DbRegistryAO dbRegistryAO) {
     }
 
     private void checkProperties(List<DbProperties> dbPropertiesList) {
@@ -74,7 +90,7 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
             throw new BusinessException(ResponseCodeEnum.SYSTEM_EXCEPTION.getCode(), "缺少 username");
         }
 
-        if (StringUtil.isEmpty(druidDataSourceProperties.getPassword())) {
+        if (ObjectUtil.isNull(druidDataSourceProperties.getPassword())) {
             throw new BusinessException(ResponseCodeEnum.SYSTEM_EXCEPTION.getCode(), "缺少 password");
         }
 
