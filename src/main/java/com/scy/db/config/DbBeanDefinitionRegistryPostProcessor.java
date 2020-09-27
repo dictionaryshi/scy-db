@@ -8,6 +8,7 @@ import com.scy.core.enums.ResponseCodeEnum;
 import com.scy.core.exception.BusinessException;
 import com.scy.core.spring.ApplicationContextUtil;
 import com.scy.db.constant.DbConstant;
+import com.scy.db.datasource.RoutingDataSource;
 import com.scy.db.model.ao.DbRegistryAO;
 import com.scy.db.properties.DbProperties;
 import com.scy.db.properties.DruidDataSourceProperties;
@@ -56,6 +57,15 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
         dbRegistryAO.setTransactionManagerBeanName(dbProperties.getName() + DbConstant.TRANSACTION_MANAGER);
 
         registryDruid(dbRegistryAO);
+
+        registryDataSource(dbRegistryAO);
+    }
+
+    private void registryDataSource(DbRegistryAO dbRegistryAO) {
+        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(RoutingDataSource.class);
+        beanDefinitionBuilder.addPropertyReference("masterDruidDataSource", dbRegistryAO.getMasterBeanName());
+        beanDefinitionBuilder.addPropertyReference("slaveDruidDataSource", dbRegistryAO.getSlaveBeanName());
+        dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getDataSourceBeanName(), beanDefinitionBuilder.getBeanDefinition());
     }
 
     private void registryDruid(DbRegistryAO dbRegistryAO) {

@@ -4,6 +4,9 @@ import com.alibaba.druid.pool.DruidDataSource;
 import com.scy.core.CollectionUtil;
 import com.scy.core.format.MessageUtil;
 import com.scy.core.thread.ThreadLocalUtil;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 import org.springframework.lang.NonNull;
@@ -17,6 +20,9 @@ import javax.sql.DataSource;
  * Created by shichunyang on 2020/9/26.
  */
 @Slf4j
+@Getter
+@Setter
+@ToString
 public class RoutingDataSource extends AbstractRoutingDataSource {
 
     public static final String DATA_SOURCE_LOOKUP_KEY = "data_source_lookup_key";
@@ -24,6 +30,10 @@ public class RoutingDataSource extends AbstractRoutingDataSource {
     public static final String MASTER = "master";
 
     public static final String SLAVE = "slave";
+
+    private DruidDataSource masterDruidDataSource;
+
+    private DruidDataSource slaveDruidDataSource;
 
     public static void routingMaster() {
         ThreadLocalUtil.put(DATA_SOURCE_LOOKUP_KEY, MASTER);
@@ -51,10 +61,10 @@ public class RoutingDataSource extends AbstractRoutingDataSource {
         return getRouting();
     }
 
-    public static RoutingDataSource getRoutingDataSource(DruidDataSource master, DruidDataSource slave) {
-        RoutingDataSource routingDataSource = new RoutingDataSource();
-        routingDataSource.setTargetDataSources(CollectionUtil.newHashMap(MASTER, master, SLAVE, slave));
-        routingDataSource.setLenientFallback(Boolean.FALSE);
-        return routingDataSource;
+    @Override
+    public void afterPropertiesSet() {
+        setTargetDataSources(CollectionUtil.newHashMap(MASTER, masterDruidDataSource, SLAVE, slaveDruidDataSource));
+        setLenientFallback(Boolean.FALSE);
+        super.afterPropertiesSet();
     }
 }
