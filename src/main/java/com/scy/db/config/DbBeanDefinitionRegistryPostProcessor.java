@@ -68,7 +68,7 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
     }
 
     private void registrySqlSessionFactory(DbRegistryAO dbRegistryAO) {
-        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(SqlSessionFactoryBean.class);
+        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(SqlSessionFactoryBean.class);
         beanDefinitionBuilder.addPropertyReference("dataSource", dbRegistryAO.getDataSourceBeanName());
         beanDefinitionBuilder.addPropertyValue("dbProperties", dbRegistryAO.getDbProperties());
         dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getSqlSessionFactoryBeanName(), beanDefinitionBuilder.getBeanDefinition());
