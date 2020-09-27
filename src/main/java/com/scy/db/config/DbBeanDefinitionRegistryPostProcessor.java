@@ -1,5 +1,6 @@
 package com.scy.db.config;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import com.scy.core.CollectionUtil;
 import com.scy.core.ObjectUtil;
 import com.scy.core.StringUtil;
@@ -10,8 +11,10 @@ import com.scy.db.constant.DbConstant;
 import com.scy.db.model.ao.DbRegistryAO;
 import com.scy.db.properties.DbProperties;
 import com.scy.db.properties.DruidDataSourceProperties;
+import com.scy.db.util.DruidUtil;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.context.properties.bind.Bindable;
@@ -56,6 +59,15 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
     }
 
     private void registryDruid(DbRegistryAO dbRegistryAO) {
+        BeanDefinitionBuilder masterBeanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(DruidDataSource.class, () -> DruidUtil.getDruidDataSource(dbRegistryAO.getDbProperties().getMaster()));
+        masterBeanDefinitionBuilder.setInitMethodName("init");
+        masterBeanDefinitionBuilder.setDestroyMethodName("close");
+        dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getMasterBeanName(), masterBeanDefinitionBuilder.getBeanDefinition());
+
+        BeanDefinitionBuilder slaveBeanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(DruidDataSource.class, () -> DruidUtil.getDruidDataSource(dbRegistryAO.getDbProperties().getSlave()));
+        slaveBeanDefinitionBuilder.setInitMethodName("init");
+        slaveBeanDefinitionBuilder.setDestroyMethodName("close");
+        dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getSlaveBeanName(), slaveBeanDefinitionBuilder.getBeanDefinition());
     }
 
     private void checkProperties(List<DbProperties> dbPropertiesList) {
