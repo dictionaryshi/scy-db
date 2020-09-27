@@ -10,6 +10,7 @@ import com.scy.core.spring.ApplicationContextUtil;
 import com.scy.db.constant.DbConstant;
 import com.scy.db.datasource.RoutingDataSource;
 import com.scy.db.model.ao.DbRegistryAO;
+import com.scy.db.mybatis.SqlSessionFactoryBean;
 import com.scy.db.properties.DbProperties;
 import com.scy.db.properties.DruidDataSourceProperties;
 import com.scy.db.transaction.ForceMasterDataSourceTransactionManager;
@@ -62,6 +63,15 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
         registryDataSource(dbRegistryAO);
 
         registryTransactionManager(dbRegistryAO);
+
+        registrySqlSessionFactory(dbRegistryAO);
+    }
+
+    private void registrySqlSessionFactory(DbRegistryAO dbRegistryAO) {
+        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(SqlSessionFactoryBean.class);
+        beanDefinitionBuilder.addPropertyReference("dataSource", dbRegistryAO.getDataSourceBeanName());
+        beanDefinitionBuilder.addPropertyValue("dbProperties", dbRegistryAO.getDbProperties());
+        dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getSqlSessionFactoryBeanName(), beanDefinitionBuilder.getBeanDefinition());
     }
 
     private void registryTransactionManager(DbRegistryAO dbRegistryAO) {
