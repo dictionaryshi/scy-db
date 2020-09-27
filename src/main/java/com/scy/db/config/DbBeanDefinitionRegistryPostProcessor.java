@@ -12,6 +12,7 @@ import com.scy.db.datasource.RoutingDataSource;
 import com.scy.db.model.ao.DbRegistryAO;
 import com.scy.db.properties.DbProperties;
 import com.scy.db.properties.DruidDataSourceProperties;
+import com.scy.db.transaction.ForceMasterDataSourceTransactionManager;
 import com.scy.db.util.DruidUtil;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -59,6 +60,14 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
         registryDruid(dbRegistryAO);
 
         registryDataSource(dbRegistryAO);
+
+        registryTransactionManager(dbRegistryAO);
+    }
+
+    private void registryTransactionManager(DbRegistryAO dbRegistryAO) {
+        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(ForceMasterDataSourceTransactionManager.class);
+        beanDefinitionBuilder.addConstructorArgReference(dbRegistryAO.getMasterBeanName());
+        dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getTransactionManagerBeanName(), beanDefinitionBuilder.getBeanDefinition());
     }
 
     private void registryDataSource(DbRegistryAO dbRegistryAO) {
