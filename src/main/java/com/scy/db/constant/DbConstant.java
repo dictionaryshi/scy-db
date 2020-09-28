@@ -24,4 +24,6 @@ public class DbConstant {
     public static final String SQL_SESSION_FACTORY = "SqlSessionFactory";
 
     public static final String SQL_SESSION_TEMPLATE = "SqlSessionTemplate";
+
+    public static final String MAPPER_SCANNER_CONFIGURER = "MapperScannerConfigurer";
 }

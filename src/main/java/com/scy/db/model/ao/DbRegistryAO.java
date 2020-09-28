@@ -27,9 +27,11 @@ public class DbRegistryAO {
 
     private String dataSourceBeanName;
 
+    private String transactionManagerBeanName;
+
     private String sqlSessionFactoryBeanName;
 
     private String sqlSessionTemplateBeanName;
 
-    private String transactionManagerBeanName;
+    private String mapperScannerConfigurerBeanName;
 }
