@@ -98,7 +98,7 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
 
     private void registryTransactionManager(DbRegistryAO dbRegistryAO) {
         BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(ForceMasterDataSourceTransactionManager.class);
-        beanDefinitionBuilder.addConstructorArgReference(dbRegistryAO.getMasterBeanName());
+        beanDefinitionBuilder.addConstructorArgReference(dbRegistryAO.getDataSourceBeanName());
         dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getTransactionManagerBeanName(), beanDefinitionBuilder.getBeanDefinition());
     }
 
