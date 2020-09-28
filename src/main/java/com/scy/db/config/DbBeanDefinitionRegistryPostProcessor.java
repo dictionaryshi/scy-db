@@ -25,7 +25,6 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProce
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.lang.NonNull;
-import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -98,7 +97,7 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
 
     private void registryTransactionManager(DbRegistryAO dbRegistryAO) {
         BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(ForceMasterDataSourceTransactionManager.class);
-        beanDefinitionBuilder.addConstructorArgReference(dbRegistryAO.getMasterBeanName());
+        beanDefinitionBuilder.addConstructorArgReference(dbRegistryAO.getDataSourceBeanName());
         dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getTransactionManagerBeanName(), beanDefinitionBuilder.getBeanDefinition());
     }
 
