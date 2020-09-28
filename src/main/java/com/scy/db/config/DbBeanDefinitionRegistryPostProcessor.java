@@ -16,6 +16,7 @@ import com.scy.db.properties.DruidDataSourceProperties;
 import com.scy.db.transaction.ForceMasterDataSourceTransactionManager;
 import com.scy.db.util.DruidUtil;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProce
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.lang.NonNull;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,9 +57,10 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
         dbRegistryAO.setMasterBeanName(dbProperties.getName() + DbConstant.DATA_SOURCE_MASTER);
         dbRegistryAO.setSlaveBeanName(dbProperties.getName() + DbConstant.DATA_SOURCE_SLAVE);
         dbRegistryAO.setDataSourceBeanName(dbProperties.getName() + DbConstant.DATA_SOURCE);
+        dbRegistryAO.setTransactionManagerBeanName(dbProperties.getName() + DbConstant.TRANSACTION_MANAGER);
         dbRegistryAO.setSqlSessionFactoryBeanName(dbProperties.getName() + DbConstant.SQL_SESSION_FACTORY);
         dbRegistryAO.setSqlSessionTemplateBeanName(dbProperties.getName() + DbConstant.SQL_SESSION_TEMPLATE);
-        dbRegistryAO.setTransactionManagerBeanName(dbProperties.getName() + DbConstant.TRANSACTION_MANAGER);
+        dbRegistryAO.setMapperScannerConfigurerBeanName(dbProperties.getName() + DbConstant.MAPPER_SCANNER_CONFIGURER);
 
         registryDruid(dbRegistryAO);
 
@@ -68,6 +71,16 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
         registrySqlSessionFactory(dbRegistryAO);
 
         registrySqlSessionTemplate(dbRegistryAO);
+
+        registryMapperScannerConfigurer(dbRegistryAO);
+    }
+
+    private void registryMapperScannerConfigurer(DbRegistryAO dbRegistryAO) {
+        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(MapperScannerConfigurer.class);
+        beanDefinitionBuilder.addPropertyValue("processPropertyPlaceHolders", Boolean.TRUE);
+        beanDefinitionBuilder.addPropertyValue("sqlSessionFactoryBeanName", dbRegistryAO.getSqlSessionFactoryBeanName());
+        beanDefinitionBuilder.addPropertyValue("basePackage", dbRegistryAO.getDbProperties().getBasePackages());
+        dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getMapperScannerConfigurerBeanName(), beanDefinitionBuilder.getBeanDefinition());
     }
 
     private void registrySqlSessionTemplate(DbRegistryAO dbRegistryAO) {
