@@ -15,6 +15,7 @@ import com.scy.db.properties.DbProperties;
 import com.scy.db.properties.DruidDataSourceProperties;
 import com.scy.db.transaction.ForceMasterDataSourceTransactionManager;
 import com.scy.db.util.DruidUtil;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -65,6 +66,14 @@ public class DbBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegi
         registryTransactionManager(dbRegistryAO);
 
         registrySqlSessionFactory(dbRegistryAO);
+
+        registrySqlSessionTemplate(dbRegistryAO);
+    }
+
+    private void registrySqlSessionTemplate(DbRegistryAO dbRegistryAO) {
+        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(SqlSessionTemplate.class);
+        beanDefinitionBuilder.addConstructorArgReference(dbRegistryAO.getSqlSessionFactoryBeanName());
+        dbRegistryAO.getRegistry().registerBeanDefinition(dbRegistryAO.getSqlSessionTemplateBeanName(), beanDefinitionBuilder.getBeanDefinition());
     }
 
     private void registrySqlSessionFactory(DbRegistryAO dbRegistryAO) {
