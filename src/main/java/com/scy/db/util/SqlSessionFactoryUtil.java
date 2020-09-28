@@ -60,10 +60,10 @@ public class SqlSessionFactoryUtil {
         configuration.setAutoMappingBehavior(AutoMappingBehavior.PARTIAL);
 
         // 配置默认的执行器。SIMPLE就是普通的执行器; REUSE执行器会重用预处理语句(PreparedStatement); BATCH执行器不仅重用语句还会执行批量更新。
-        configuration.setDefaultExecutorType(ExecutorType.BATCH);
+        configuration.setDefaultExecutorType(ExecutorType.SIMPLE);
 
         // 设置超时时间, 它决定数据库驱动等待数据库响应的秒数。
-        configuration.setDefaultStatementTimeout(60);
+        configuration.setDefaultStatementTimeout(50);
 
         // 是否开启驼峰命名自动映射
         configuration.setMapUnderscoreToCamelCase(Boolean.TRUE);
