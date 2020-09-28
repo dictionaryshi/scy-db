@@ -1,7 +1,13 @@
 package com.scy.db.util;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.scy.core.spring.ApplicationContextUtil;
+import com.scy.db.model.bo.DruidMonitorBO;
 import com.scy.db.properties.DruidDataSourceProperties;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * DruidUtil
@@ -72,5 +78,19 @@ public class DruidUtil {
         druidDataSource.setTestOnReturn(Boolean.FALSE);
 
         return druidDataSource;
+    }
+
+    public static List<DruidMonitorBO> getDruidMonitorInfo() {
+        Map<String, DruidDataSource> druidDataSourceMap = ApplicationContextUtil.getBeansOfType(DruidDataSource.class);
+        return druidDataSourceMap.values().stream().map(druidDataSource -> {
+            DruidMonitorBO druidMonitorBO = new DruidMonitorBO();
+            druidMonitorBO.setUrl(druidDataSource.getUrl());
+            druidMonitorBO.setMinIdle(druidDataSource.getMinIdle());
+            druidMonitorBO.setMaxActive(druidDataSource.getMaxActive());
+            druidMonitorBO.setAllCount(druidDataSource.getPoolingCount() + druidDataSource.getActiveCount());
+            druidMonitorBO.setPoolingCount(druidDataSource.getPoolingCount());
+            druidMonitorBO.setActiveCount(druidDataSource.getActiveCount());
+            return druidMonitorBO;
+        }).collect(Collectors.toList());
     }
 }
