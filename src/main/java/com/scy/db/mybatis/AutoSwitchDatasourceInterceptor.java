@@ -64,8 +64,7 @@ public class AutoSwitchDatasourceInterceptor implements Interceptor {
 
         String id = mappedStatement.getId();
         log.info(MessageUtil.format("mybatis intercept",
-                "id", id, "sql", boundSql.getSql(), StringUtil.COST, end - start,
-                "params", parameter == null ? StringUtil.EMPTY : parameter.toString()));
+                "id", id, "sql", boundSql.getSql(), StringUtil.COST, end - start));
 
         return objectValue;
     }
