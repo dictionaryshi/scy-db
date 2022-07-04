@@ -52,7 +52,7 @@ public class RoutingDataSource extends AbstractRoutingDataSource {
     protected DataSource determineTargetDataSource() {
         DataSource dataSource = super.determineTargetDataSource();
         DruidDataSource druidDataSource = (DruidDataSource) dataSource;
-        log.info(MessageUtil.format("determineTargetDataSource", "url", druidDataSource.getUrl()));
+        log.debug(MessageUtil.format("determineTargetDataSource", "url", druidDataSource.getUrl()));
         return dataSource;
     }
 
