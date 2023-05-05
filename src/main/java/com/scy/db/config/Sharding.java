@@ -8,7 +8,7 @@ import org.apache.shardingsphere.driver.api.ShardingSphereDataSourceFactory;
 import org.apache.shardingsphere.infra.config.algorithm.AlgorithmConfiguration;
 import org.apache.shardingsphere.infra.config.mode.ModeConfiguration;
 import org.apache.shardingsphere.infra.config.rule.RuleConfiguration;
-import org.apache.shardingsphere.mode.repository.cluster.ClusterPersistRepositoryConfiguration;
+import org.apache.shardingsphere.mode.repository.standalone.StandalonePersistRepositoryConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.ReadwriteSplittingRuleConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.rule.ReadwriteSplittingDataSourceRuleConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.strategy.StaticReadwriteSplittingStrategyConfiguration;
@@ -26,11 +26,11 @@ import java.util.*;
  */
 public class Sharding {
 
-    private ModeConfiguration createModeConfiguration() {
-        return new ModeConfiguration("Cluster", new ClusterPersistRepositoryConfiguration("ZooKeeper", "wxjj-sharding-db", "localhost:2181", new Properties()));
+    private static ModeConfiguration createModeConfiguration() {
+        return new ModeConfiguration("Standalone", new StandalonePersistRepositoryConfiguration("JDBC", new Properties()));
     }
 
-    private Map<String, DataSource> createDataSources() {
+    public static Map<String, DataSource> createDataSourceMap() {
         Map<String, DataSource> dataSourceMap = new HashMap<>(16);
 
         DruidDataSourceProperties ds1 = new DruidDataSourceProperties();
@@ -106,7 +106,7 @@ public class Sharding {
         return dataSourceMap;
     }
 
-    public DataSource getDataSource() throws SQLException {
+    public static DataSource getDataSource(Map<String, DataSource> dataSourceMap) throws SQLException {
         Map<String, AlgorithmConfiguration> algorithmConfigMap = new HashMap<>(1);
         algorithmConfigMap.put("round_robin", new AlgorithmConfiguration("ROUND_ROBIN", new Properties()));
 
@@ -127,6 +127,6 @@ public class Sharding {
         Properties props = new Properties();
         props.setProperty("sql-show", Boolean.TRUE.toString());
 
-        return ShardingSphereDataSourceFactory.createDataSource("wxjj", createModeConfiguration(), createDataSources(), ruleConfigurations, props);
+        return ShardingSphereDataSourceFactory.createDataSource("wxjj", createModeConfiguration(), dataSourceMap, ruleConfigurations, props);
     }
 }
