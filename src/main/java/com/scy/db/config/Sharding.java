@@ -111,13 +111,13 @@ public class Sharding {
         algorithmConfigMap.put("round_robin", new AlgorithmConfiguration("ROUND_ROBIN", new Properties()));
 
         ReadwriteSplittingDataSourceRuleConfiguration ds1RuleConfiguration = new ReadwriteSplittingDataSourceRuleConfiguration(
-                "ds_1_shard", new StaticReadwriteSplittingStrategyConfiguration("ds_1", CollectionUtil.newArrayList("ds_1_read1", "ds_1_read2")), null, "round_robin");
+                "ds0", new StaticReadwriteSplittingStrategyConfiguration("ds_1", CollectionUtil.newArrayList("ds_1_read1", "ds_1_read2")), null, "round_robin");
 
         ReadwriteSplittingDataSourceRuleConfiguration ds2RuleConfiguration = new ReadwriteSplittingDataSourceRuleConfiguration(
-                "ds_2_shard", new StaticReadwriteSplittingStrategyConfiguration("ds_2", CollectionUtil.newArrayList("ds_2_read")), null, "round_robin");
+                "ds1", new StaticReadwriteSplittingStrategyConfiguration("ds_2", CollectionUtil.newArrayList("ds_2_read")), null, "round_robin");
 
         ReadwriteSplittingDataSourceRuleConfiguration ds3RuleConfiguration = new ReadwriteSplittingDataSourceRuleConfiguration(
-                "ds_3_shard", new StaticReadwriteSplittingStrategyConfiguration("ds_3", CollectionUtil.newArrayList("ds_3_read")), null, "round_robin");
+                "ds2", new StaticReadwriteSplittingStrategyConfiguration("ds_3", CollectionUtil.newArrayList("ds_3_read")), null, "round_robin");
 
         List<RuleConfiguration> ruleConfigurations = CollectionUtil.newArrayList();
 

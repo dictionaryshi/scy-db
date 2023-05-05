@@ -80,10 +80,10 @@ public class DbShardBeanDefinitionRegistryPostProcessor implements BeanDefinitio
 
     private void registryDruid(BeanDefinitionRegistry registry, Map<String, DataSource> dataSourceMap) {
         dataSourceMap.forEach((databaseName, value) -> {
-            BeanDefinitionBuilder masterBeanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(DruidDataSource.class, () -> (DruidDataSource) value);
-            masterBeanDefinitionBuilder.setInitMethodName("init");
-            masterBeanDefinitionBuilder.setDestroyMethodName("close");
-            registry.registerBeanDefinition(databaseName, masterBeanDefinitionBuilder.getBeanDefinition());
+            BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(DruidDataSource.class, () -> (DruidDataSource) value);
+            beanDefinitionBuilder.setInitMethodName("init");
+            beanDefinitionBuilder.setDestroyMethodName("close");
+            registry.registerBeanDefinition(databaseName, beanDefinitionBuilder.getBeanDefinition());
         });
     }
 
