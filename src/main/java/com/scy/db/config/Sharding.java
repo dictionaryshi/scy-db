@@ -130,9 +130,6 @@ public class Sharding {
         ReadwriteSplittingRuleConfiguration readwriteSplittingRuleConfiguration = new ReadwriteSplittingRuleConfiguration(CollectionUtil.newArrayList(ds1RuleConfiguration, ds2RuleConfiguration, ds3RuleConfiguration), algorithmConfigMap);
         ruleConfigurations.add(readwriteSplittingRuleConfiguration);
 
-        TransactionRuleConfiguration transactionRuleConfiguration = new TransactionRuleConfiguration("XA", "Atomikos", new Properties());
-        ruleConfigurations.add(transactionRuleConfiguration);
-
         ShardingRuleConfiguration shardingRuleConfiguration = createShardingRuleConfiguration();
         ruleConfigurations.add(shardingRuleConfiguration);
 
@@ -157,15 +154,15 @@ public class Sharding {
         result.getKeyGenerators().put("snowflake", new AlgorithmConfiguration("SNOWFLAKE", new Properties()));
 
         result.getAuditors().put("sharding_key_required_auditor", new AlgorithmConfiguration("DML_SHARDING_CONDITIONS", new Properties()));
+
+        result.setDefaultAuditStrategy(new ShardingAuditStrategyConfiguration(Collections.singleton("sharding_key_required_auditor"), Boolean.TRUE));
         return result;
     }
 
     private static ShardingTableRuleConfiguration getOrderTableRuleConfiguration() {
-        ShardingTableRuleConfiguration result = new ShardingTableRuleConfiguration("sku_order", "ds${0..2}.sku_order_${[0, 2]}");
+        ShardingTableRuleConfiguration result = new ShardingTableRuleConfiguration("sku_order", "ds${0..2}.sku_order_${0..2}");
 
         result.setKeyGenerateStrategy(new KeyGenerateStrategyConfiguration("order_id", "snowflake"));
-
-        result.setAuditStrategy(new ShardingAuditStrategyConfiguration(Collections.singleton("sharding_key_required_auditor"), Boolean.TRUE));
 
         result.setDatabaseShardingStrategy(new StandardShardingStrategyConfiguration("operator", "db_shard_operator"));
 
