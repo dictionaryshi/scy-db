@@ -12,6 +12,12 @@ import org.apache.shardingsphere.mode.repository.standalone.StandalonePersistRep
 import org.apache.shardingsphere.readwritesplitting.api.ReadwriteSplittingRuleConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.rule.ReadwriteSplittingDataSourceRuleConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.strategy.StaticReadwriteSplittingStrategyConfiguration;
+import org.apache.shardingsphere.sharding.api.config.ShardingRuleConfiguration;
+import org.apache.shardingsphere.sharding.api.config.rule.ShardingTableRuleConfiguration;
+import org.apache.shardingsphere.sharding.api.config.strategy.audit.ShardingAuditStrategyConfiguration;
+import org.apache.shardingsphere.sharding.api.config.strategy.keygen.KeyGenerateStrategyConfiguration;
+import org.apache.shardingsphere.sharding.api.config.strategy.sharding.StandardShardingStrategyConfiguration;
+import org.apache.shardingsphere.transaction.config.TransactionRuleConfiguration;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -124,9 +130,47 @@ public class Sharding {
         ReadwriteSplittingRuleConfiguration readwriteSplittingRuleConfiguration = new ReadwriteSplittingRuleConfiguration(CollectionUtil.newArrayList(ds1RuleConfiguration, ds2RuleConfiguration, ds3RuleConfiguration), algorithmConfigMap);
         ruleConfigurations.add(readwriteSplittingRuleConfiguration);
 
+        TransactionRuleConfiguration transactionRuleConfiguration = new TransactionRuleConfiguration("XA", "Atomikos", new Properties());
+        ruleConfigurations.add(transactionRuleConfiguration);
+
+        ShardingRuleConfiguration shardingRuleConfiguration = createShardingRuleConfiguration();
+        ruleConfigurations.add(shardingRuleConfiguration);
+
         Properties props = new Properties();
         props.setProperty("sql-show", Boolean.TRUE.toString());
 
         return ShardingSphereDataSourceFactory.createDataSource("wxjj", createModeConfiguration(), dataSourceMap, ruleConfigurations, props);
+    }
+
+    private static ShardingRuleConfiguration createShardingRuleConfiguration() {
+        ShardingRuleConfiguration result = new ShardingRuleConfiguration();
+        result.getTables().add(getOrderTableRuleConfiguration());
+
+        Properties dbProps = new Properties();
+        dbProps.setProperty("algorithm-expression", "ds${operator % 3}");
+        result.getShardingAlgorithms().put("db_shard_operator", new AlgorithmConfiguration("INLINE", dbProps));
+
+        Properties tableProps = new Properties();
+        tableProps.setProperty("algorithm-expression", "sku_order_${order_id % 3}");
+        result.getShardingAlgorithms().put("table_shard_order_id", new AlgorithmConfiguration("INLINE", tableProps));
+
+        result.getKeyGenerators().put("snowflake", new AlgorithmConfiguration("SNOWFLAKE", new Properties()));
+
+        result.getAuditors().put("sharding_key_required_auditor", new AlgorithmConfiguration("DML_SHARDING_CONDITIONS", new Properties()));
+        return result;
+    }
+
+    private static ShardingTableRuleConfiguration getOrderTableRuleConfiguration() {
+        ShardingTableRuleConfiguration result = new ShardingTableRuleConfiguration("sku_order", "ds${0..2}.sku_order_${[0, 2]}");
+
+        result.setKeyGenerateStrategy(new KeyGenerateStrategyConfiguration("order_id", "snowflake"));
+
+        result.setAuditStrategy(new ShardingAuditStrategyConfiguration(Collections.singleton("sharding_key_required_auditor"), Boolean.TRUE));
+
+        result.setDatabaseShardingStrategy(new StandardShardingStrategyConfiguration("operator", "db_shard_operator"));
+
+        result.setTableShardingStrategy(new StandardShardingStrategyConfiguration("order_id", "table_shard_order_id"));
+
+        return result;
     }
 }
