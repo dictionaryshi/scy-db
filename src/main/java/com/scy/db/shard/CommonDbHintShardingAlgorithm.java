@@ -4,6 +4,8 @@ import org.apache.shardingsphere.sharding.api.sharding.hint.HintShardingAlgorith
 import org.apache.shardingsphere.sharding.api.sharding.hint.HintShardingValue;
 
 import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author : shichunyang
@@ -16,6 +18,9 @@ public class CommonDbHintShardingAlgorithm implements HintShardingAlgorithm<Long
 
     @Override
     public Collection<String> doSharding(Collection<String> availableTargetNames, HintShardingValue<Long> shardingValue) {
+        Collection<Long> values = shardingValue.getValues();
+
+        availableTargetNames = availableTargetNames.stream().filter(db -> values.stream().anyMatch(value -> Objects.equals(db, "ds".concat(String.valueOf(value))))).collect(Collectors.toList());
         return availableTargetNames;
     }
 }
