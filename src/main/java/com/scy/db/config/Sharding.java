@@ -9,15 +9,16 @@ import org.apache.shardingsphere.infra.config.algorithm.AlgorithmConfiguration;
 import org.apache.shardingsphere.infra.config.mode.ModeConfiguration;
 import org.apache.shardingsphere.infra.config.rule.RuleConfiguration;
 import org.apache.shardingsphere.mode.repository.standalone.StandalonePersistRepositoryConfiguration;
+import org.apache.shardingsphere.parser.config.SQLParserRuleConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.ReadwriteSplittingRuleConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.rule.ReadwriteSplittingDataSourceRuleConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.strategy.StaticReadwriteSplittingStrategyConfiguration;
 import org.apache.shardingsphere.sharding.api.config.ShardingRuleConfiguration;
 import org.apache.shardingsphere.sharding.api.config.rule.ShardingTableRuleConfiguration;
 import org.apache.shardingsphere.sharding.api.config.strategy.audit.ShardingAuditStrategyConfiguration;
-import org.apache.shardingsphere.sharding.api.config.strategy.keygen.KeyGenerateStrategyConfiguration;
+import org.apache.shardingsphere.sharding.api.config.strategy.sharding.HintShardingStrategyConfiguration;
 import org.apache.shardingsphere.sharding.api.config.strategy.sharding.StandardShardingStrategyConfiguration;
-import org.apache.shardingsphere.transaction.config.TransactionRuleConfiguration;
+import org.apache.shardingsphere.sql.parser.api.CacheOption;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -133,6 +134,10 @@ public class Sharding {
         ShardingRuleConfiguration shardingRuleConfiguration = createShardingRuleConfiguration();
         ruleConfigurations.add(shardingRuleConfiguration);
 
+        /* SHARDINGSPHERE_HINT: DISABLE_AUDIT_NAMES = sharding_key_required_auditor */
+        SQLParserRuleConfiguration sqlParserRuleConfiguration = new SQLParserRuleConfiguration(Boolean.TRUE, new CacheOption(128, 1024), new CacheOption(2000, 65535));
+        ruleConfigurations.add(sqlParserRuleConfiguration);
+
         Properties props = new Properties();
         props.setProperty("sql-show", Boolean.TRUE.toString());
 
@@ -151,6 +156,16 @@ public class Sharding {
         tableProps.setProperty("algorithm-expression", "sku_order_${order_id % 3}");
         result.getShardingAlgorithms().put("table_shard_order_id", new AlgorithmConfiguration("INLINE", tableProps));
 
+        Properties commonDbProps = new Properties();
+        commonDbProps.setProperty("strategy", "HINT");
+        commonDbProps.setProperty("algorithmClassName", "com.scy.db.shard.CommonDbHintShardingAlgorithm");
+        result.getShardingAlgorithms().put("common_db_hint", new AlgorithmConfiguration("CLASS_BASED", commonDbProps));
+
+        Properties commonTableProps = new Properties();
+        commonTableProps.setProperty("strategy", "HINT");
+        commonTableProps.setProperty("algorithmClassName", "com.scy.db.shard.CommonTableHintShardingAlgorithm");
+        result.getShardingAlgorithms().put("common_table_hint", new AlgorithmConfiguration("CLASS_BASED", commonTableProps));
+
         result.getKeyGenerators().put("snowflake", new AlgorithmConfiguration("SNOWFLAKE", new Properties()));
 
         result.getAuditors().put("sharding_key_required_auditor", new AlgorithmConfiguration("DML_SHARDING_CONDITIONS", new Properties()));
@@ -162,11 +177,13 @@ public class Sharding {
     private static ShardingTableRuleConfiguration getOrderTableRuleConfiguration() {
         ShardingTableRuleConfiguration result = new ShardingTableRuleConfiguration("sku_order", "ds${0..2}.sku_order_${0..2}");
 
-        result.setKeyGenerateStrategy(new KeyGenerateStrategyConfiguration("order_id", "snowflake"));
-
         result.setDatabaseShardingStrategy(new StandardShardingStrategyConfiguration("operator", "db_shard_operator"));
 
         result.setTableShardingStrategy(new StandardShardingStrategyConfiguration("order_id", "table_shard_order_id"));
+
+//        result.setDatabaseShardingStrategy(new HintShardingStrategyConfiguration("common_db_hint"));
+//
+//        result.setTableShardingStrategy(new HintShardingStrategyConfiguration("common_table_hint"));
 
         return result;
     }
