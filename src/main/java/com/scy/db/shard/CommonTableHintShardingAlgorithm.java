@@ -4,6 +4,7 @@ import org.apache.shardingsphere.sharding.api.sharding.hint.HintShardingAlgorith
 import org.apache.shardingsphere.sharding.api.sharding.hint.HintShardingValue;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * @author : shichunyang
@@ -16,6 +17,9 @@ public class CommonTableHintShardingAlgorithm implements HintShardingAlgorithm<L
 
     @Override
     public Collection<String> doSharding(Collection<String> availableTargetNames, HintShardingValue<Long> shardingValue) {
+        Collection<Long> values = shardingValue.getValues();
+
+        availableTargetNames = availableTargetNames.stream().filter(table -> values.stream().anyMatch(value -> table.endsWith("_".concat(String.valueOf(value))))).collect(Collectors.toList());
         return availableTargetNames;
     }
 }
