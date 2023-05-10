@@ -16,6 +16,7 @@ import org.apache.shardingsphere.readwritesplitting.api.strategy.StaticReadwrite
 import org.apache.shardingsphere.sharding.api.config.ShardingRuleConfiguration;
 import org.apache.shardingsphere.sharding.api.config.rule.ShardingTableRuleConfiguration;
 import org.apache.shardingsphere.sharding.api.config.strategy.audit.ShardingAuditStrategyConfiguration;
+import org.apache.shardingsphere.sharding.api.config.strategy.sharding.ComplexShardingStrategyConfiguration;
 import org.apache.shardingsphere.sharding.api.config.strategy.sharding.HintShardingStrategyConfiguration;
 import org.apache.shardingsphere.sharding.api.config.strategy.sharding.StandardShardingStrategyConfiguration;
 import org.apache.shardingsphere.sql.parser.api.CacheOption;
@@ -156,6 +157,11 @@ public class Sharding {
         tableProps.setProperty("algorithm-expression", "sku_order_${order_id % 3}");
         result.getShardingAlgorithms().put("table_shard_order_id", new AlgorithmConfiguration("INLINE", tableProps));
 
+        Properties dbComplexProps = new Properties();
+        dbComplexProps.setProperty("strategy", "COMPLEX");
+        dbComplexProps.setProperty("algorithmClassName", "com.scy.db.shard.DbComplexKeysShardingAlgorithm");
+        result.getShardingAlgorithms().put("db_complex", new AlgorithmConfiguration("CLASS_BASED", dbComplexProps));
+
         Properties commonDbProps = new Properties();
         commonDbProps.setProperty("strategy", "HINT");
         commonDbProps.setProperty("algorithmClassName", "com.scy.db.shard.CommonDbHintShardingAlgorithm");
@@ -184,6 +190,8 @@ public class Sharding {
 //        result.setDatabaseShardingStrategy(new HintShardingStrategyConfiguration("common_db_hint"));
 //
 //        result.setTableShardingStrategy(new HintShardingStrategyConfiguration("common_table_hint"));
+
+//        result.setDatabaseShardingStrategy(new ComplexShardingStrategyConfiguration("order_id, operator", "db_complex"));
 
         return result;
     }
