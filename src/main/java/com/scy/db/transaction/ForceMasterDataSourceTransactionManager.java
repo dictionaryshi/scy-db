@@ -3,12 +3,15 @@ package com.scy.db.transaction;
 import com.scy.core.StringUtil;
 import com.scy.core.SystemUtil;
 import com.scy.core.format.MessageUtil;
+import com.scy.core.spring.ApplicationContextUtil;
 import com.scy.core.thread.ThreadLocalUtil;
 import com.scy.db.util.ForceMasterHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.lang.NonNull;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import javax.sql.DataSource;
 
@@ -25,6 +28,8 @@ public class ForceMasterDataSourceTransactionManager extends DataSourceTransacti
 
     public ForceMasterDataSourceTransactionManager(DataSource dataSource) {
         super(dataSource);
+
+        super.setRollbackOnCommitFailure(Boolean.TRUE);
     }
 
     public static void setTransactionStartTime() {
@@ -54,5 +59,19 @@ public class ForceMasterDataSourceTransactionManager extends DataSourceTransacti
         ForceMasterHelper.clearForceMaster();
 
         log.info(MessageUtil.format("transaction finish", StringUtil.COST, SystemUtil.currentTimeMillis() - getTransactionStartTime()));
+    }
+
+    public static void main(String[] args) {
+        DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+        transactionDefinition.setPropagationBehavior(DefaultTransactionDefinition.PROPAGATION_REQUIRED);
+        transactionDefinition.setIsolationLevel(DefaultTransactionDefinition.ISOLATION_READ_COMMITTED);
+        transactionDefinition.setTimeout(DefaultTransactionDefinition.TIMEOUT_DEFAULT);
+        transactionDefinition.setReadOnly(Boolean.FALSE);
+
+        ForceMasterDataSourceTransactionManager dataSourceTransactionManager = ApplicationContextUtil.getBean("xxx", ForceMasterDataSourceTransactionManager.class);
+        TransactionStatus transaction = dataSourceTransactionManager.getTransaction(transactionDefinition);
+
+        dataSourceTransactionManager.commit(transaction);
+        dataSourceTransactionManager.rollback(transaction);
     }
 }
