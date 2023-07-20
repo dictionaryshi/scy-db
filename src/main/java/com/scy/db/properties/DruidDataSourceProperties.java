@@ -50,6 +50,10 @@ public class DruidDataSourceProperties {
                 + "?characterEncoding=UTF8"
                 + "&useSSL=false"
                 + "&allowMultiQueries=true"
+                + "&useAffectedRows=true"
+                + "&zeroDateTimeBehavior=convertToNull"
+                + "&useOldAliasMetadataBehavior=true"
+                + "&failOverReadOnly=false"
                 + "&serverTimezone=Asia/Shanghai"
                 + "&socketTimeout=60000"
         );
