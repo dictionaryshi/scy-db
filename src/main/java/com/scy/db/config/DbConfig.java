@@ -1,5 +1,6 @@
 package com.scy.db.config;
 
+import com.scy.db.aspect.MoleAspect;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
@@ -15,5 +16,10 @@ public class DbConfig {
     @Bean
     public DbBeanDefinitionRegistryPostProcessor dbBeanDefinitionRegistryPostProcessor() {
         return new DbBeanDefinitionRegistryPostProcessor();
+    }
+
+    @Bean
+    public MoleAspect moleAspect() {
+        return new MoleAspect();
     }
 }
