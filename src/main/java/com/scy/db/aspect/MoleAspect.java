@@ -23,6 +23,7 @@ import com.scy.core.thread.ThreadPoolUtil;
 import com.scy.db.annotation.Mole;
 import com.scy.db.mapper.MoleTaskDOMapper;
 import com.scy.db.model.MoleTaskDO;
+import com.scy.db.model.MoleTaskDOExample;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -120,6 +121,17 @@ public class MoleAspect {
 
     private void execute(MoleTaskDO moleTaskDO) {
         try {
+            MoleTaskDO updateMoleTaskDO = new MoleTaskDO();
+            updateMoleTaskDO.setExeStatus(1);
+            updateMoleTaskDO.setUpdatedAt(DateUtil.getCurrentDate());
+
+            MoleTaskDOExample example = new MoleTaskDOExample();
+            MoleTaskDOExample.Criteria criteria = example.createCriteria();
+            criteria.andIdEqualTo(moleTaskDO.getId());
+            criteria.andExeStatusEqualTo(0);
+            int result = moleTaskDOMapper.updateByExampleSelective(updateMoleTaskDO, example);
+            SqlUtil.checkOneRecord(result);
+
             List<String> paramTypeNames = JsonUtil.json2Object(moleTaskDO.getParamTypeJson(), new TypeReference<List<String>>() {
             });
             List<JavaType> paramJavaTypes = paramTypeNames.stream().map(JsonUtil::getJavaType).collect(Collectors.toList());
@@ -142,8 +154,22 @@ public class MoleAspect {
             disableMoleAspect();
 
             userMethod.invoke(bean, args);
+
+            moleTaskDOMapper.deleteByPrimaryKey(moleTaskDO.getId());
         } catch (Exception e) {
             e.printStackTrace();
+
+            MoleTaskDO updateMoleTaskDO = new MoleTaskDO();
+            updateMoleTaskDO.setNextExeTime(new Date(System.currentTimeMillis() + (moleTaskDO.getExeIntervalSec() * DateUtil.SECOND)));
+            updateMoleTaskDO.setExeStatus(0);
+            updateMoleTaskDO.setUpdatedAt(DateUtil.getCurrentDate());
+
+            MoleTaskDOExample example = new MoleTaskDOExample();
+            MoleTaskDOExample.Criteria criteria = example.createCriteria();
+            criteria.andIdEqualTo(moleTaskDO.getId());
+            criteria.andExeStatusEqualTo(1);
+            int result = moleTaskDOMapper.updateByExampleSelective(updateMoleTaskDO, example);
+            SqlUtil.checkOneRecord(result);
         }
     }
 
