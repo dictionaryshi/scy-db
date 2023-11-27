@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.scy.core.db.SqlUtil;
+import com.scy.core.exception.ExceptionUtil;
 import com.scy.core.format.DateUtil;
 import com.scy.core.json.JsonUtil;
 import com.scy.core.model.JoinPointBO;
@@ -163,6 +164,7 @@ public class MoleAspect {
             updateMoleTaskDO.setNextExeTime(new Date(System.currentTimeMillis() + (moleTaskDO.getExeIntervalSec() * DateUtil.SECOND)));
             updateMoleTaskDO.setExeStatus(0);
             updateMoleTaskDO.setUpdatedAt(DateUtil.getCurrentDate());
+            updateMoleTaskDO.setErrorMessage(ExceptionUtil.getExceptionMessage(e));
 
             MoleTaskDOExample example = new MoleTaskDOExample();
             MoleTaskDOExample.Criteria criteria = example.createCriteria();
