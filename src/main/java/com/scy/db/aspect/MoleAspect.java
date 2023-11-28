@@ -22,9 +22,11 @@ import com.scy.core.spring.JoinPointUtil;
 import com.scy.core.thread.ThreadLocalUtil;
 import com.scy.core.thread.ThreadPoolUtil;
 import com.scy.db.annotation.Mole;
+import com.scy.db.constant.DbConstant;
 import com.scy.db.mapper.MoleTaskDOMapper;
 import com.scy.db.model.MoleTaskDO;
 import com.scy.db.model.MoleTaskDOExample;
+import com.scy.db.transaction.ForceMasterDataSourceTransactionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -32,6 +34,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -63,7 +67,7 @@ public class MoleAspect {
         MoleTaskDO moleTaskDO = new MoleTaskDO();
         moleTaskDO.setNextExeTime(new Date(System.currentTimeMillis() + (mole.delayTime() * DateUtil.SECOND)));
         moleTaskDO.setExeIntervalSec(mole.intervalTime());
-        moleTaskDO.setExeCount(1);
+        moleTaskDO.setExeCount(0);
         moleTaskDO.setMaxExeCount(mole.maxExeCount());
         moleTaskDO.setExeStatus(0);
         // 分库id
@@ -121,8 +125,17 @@ public class MoleAspect {
     }
 
     private void execute(MoleTaskDO moleTaskDO) {
+        DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+        transactionDefinition.setPropagationBehavior(DefaultTransactionDefinition.PROPAGATION_REQUIRED);
+        transactionDefinition.setIsolationLevel(DefaultTransactionDefinition.ISOLATION_READ_COMMITTED);
+        transactionDefinition.setTimeout(DefaultTransactionDefinition.TIMEOUT_DEFAULT);
+        transactionDefinition.setReadOnly(Boolean.FALSE);
+
+        ForceMasterDataSourceTransactionManager dataSourceTransactionManager = ApplicationContextUtil.getBean("warehouse" + DbConstant.TRANSACTION_MANAGER, ForceMasterDataSourceTransactionManager.class);
+        TransactionStatus transaction = dataSourceTransactionManager.getTransaction(transactionDefinition);
         try {
             MoleTaskDO updateMoleTaskDO = new MoleTaskDO();
+            updateMoleTaskDO.setExeCount(moleTaskDO.getExeCount() + 1);
             updateMoleTaskDO.setExeStatus(1);
             updateMoleTaskDO.setUpdatedAt(DateUtil.getCurrentDate());
 
@@ -154,24 +167,31 @@ public class MoleAspect {
 
             disableMoleAspect();
 
-            userMethod.invoke(bean, args);
+            try {
+                userMethod.invoke(bean, args);
+            } catch (Exception e) {
+                e.printStackTrace();
+                updateMoleTaskDO = new MoleTaskDO();
+                updateMoleTaskDO.setNextExeTime(new Date(System.currentTimeMillis() + (moleTaskDO.getExeIntervalSec() * DateUtil.SECOND)));
+                updateMoleTaskDO.setExeStatus(0);
+                updateMoleTaskDO.setUpdatedAt(DateUtil.getCurrentDate());
+                updateMoleTaskDO.setErrorMessage(ExceptionUtil.getExceptionMessage(e));
+
+                example = new MoleTaskDOExample();
+                criteria = example.createCriteria();
+                criteria.andIdEqualTo(moleTaskDO.getId());
+                criteria.andExeStatusEqualTo(1);
+                result = moleTaskDOMapper.updateByExampleSelective(updateMoleTaskDO, example);
+                SqlUtil.checkOneRecord(result);
+                return;
+            }
 
             moleTaskDOMapper.deleteByPrimaryKey(moleTaskDO.getId());
         } catch (Exception e) {
             e.printStackTrace();
-
-            MoleTaskDO updateMoleTaskDO = new MoleTaskDO();
-            updateMoleTaskDO.setNextExeTime(new Date(System.currentTimeMillis() + (moleTaskDO.getExeIntervalSec() * DateUtil.SECOND)));
-            updateMoleTaskDO.setExeStatus(0);
-            updateMoleTaskDO.setUpdatedAt(DateUtil.getCurrentDate());
-            updateMoleTaskDO.setErrorMessage(ExceptionUtil.getExceptionMessage(e));
-
-            MoleTaskDOExample example = new MoleTaskDOExample();
-            MoleTaskDOExample.Criteria criteria = example.createCriteria();
-            criteria.andIdEqualTo(moleTaskDO.getId());
-            criteria.andExeStatusEqualTo(1);
-            int result = moleTaskDOMapper.updateByExampleSelective(updateMoleTaskDO, example);
-            SqlUtil.checkOneRecord(result);
+            dataSourceTransactionManager.rollback(transaction);
+        } finally {
+            dataSourceTransactionManager.commit(transaction);
         }
     }
 
