@@ -9,17 +9,15 @@ import org.apache.shardingsphere.infra.config.algorithm.AlgorithmConfiguration;
 import org.apache.shardingsphere.infra.config.mode.ModeConfiguration;
 import org.apache.shardingsphere.infra.config.rule.RuleConfiguration;
 import org.apache.shardingsphere.mode.repository.standalone.StandalonePersistRepositoryConfiguration;
-import org.apache.shardingsphere.parser.config.SQLParserRuleConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.ReadwriteSplittingRuleConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.rule.ReadwriteSplittingDataSourceRuleConfiguration;
-import org.apache.shardingsphere.readwritesplitting.api.strategy.StaticReadwriteSplittingStrategyConfiguration;
+import org.apache.shardingsphere.readwritesplitting.api.transaction.TransactionalReadQueryStrategy;
 import org.apache.shardingsphere.sharding.api.config.ShardingRuleConfiguration;
 import org.apache.shardingsphere.sharding.api.config.rule.ShardingTableRuleConfiguration;
 import org.apache.shardingsphere.sharding.api.config.strategy.audit.ShardingAuditStrategyConfiguration;
 import org.apache.shardingsphere.sharding.api.config.strategy.sharding.ComplexShardingStrategyConfiguration;
 import org.apache.shardingsphere.sharding.api.config.strategy.sharding.HintShardingStrategyConfiguration;
 import org.apache.shardingsphere.sharding.api.config.strategy.sharding.StandardShardingStrategyConfiguration;
-import org.apache.shardingsphere.sql.parser.api.CacheOption;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -119,13 +117,13 @@ public class Sharding {
         algorithmConfigMap.put("round_robin", new AlgorithmConfiguration("ROUND_ROBIN", new Properties()));
 
         ReadwriteSplittingDataSourceRuleConfiguration ds1RuleConfiguration = new ReadwriteSplittingDataSourceRuleConfiguration(
-                "ds0", new StaticReadwriteSplittingStrategyConfiguration("ds_1", CollectionUtil.newArrayList("ds_1_read1", "ds_1_read2")), null, "round_robin");
+                "ds0", "ds_1", CollectionUtil.newArrayList("ds_1_read1", "ds_1_read2"), TransactionalReadQueryStrategy.PRIMARY, "round_robin");
 
         ReadwriteSplittingDataSourceRuleConfiguration ds2RuleConfiguration = new ReadwriteSplittingDataSourceRuleConfiguration(
-                "ds1", new StaticReadwriteSplittingStrategyConfiguration("ds_2", CollectionUtil.newArrayList("ds_2_read")), null, "round_robin");
+                "ds1", "ds_2", CollectionUtil.newArrayList("ds_2_read"), TransactionalReadQueryStrategy.PRIMARY, "round_robin");
 
         ReadwriteSplittingDataSourceRuleConfiguration ds3RuleConfiguration = new ReadwriteSplittingDataSourceRuleConfiguration(
-                "ds2", new StaticReadwriteSplittingStrategyConfiguration("ds_3", CollectionUtil.newArrayList("ds_3_read")), null, "round_robin");
+                "ds2", "ds_3", CollectionUtil.newArrayList("ds_3_read"), TransactionalReadQueryStrategy.PRIMARY, "round_robin");
 
         List<RuleConfiguration> ruleConfigurations = CollectionUtil.newArrayList();
 
@@ -134,10 +132,6 @@ public class Sharding {
 
         ShardingRuleConfiguration shardingRuleConfiguration = createShardingRuleConfiguration();
         ruleConfigurations.add(shardingRuleConfiguration);
-
-        /* SHARDINGSPHERE_HINT: DISABLE_AUDIT_NAMES = sharding_key_required_auditor */
-        SQLParserRuleConfiguration sqlParserRuleConfiguration = new SQLParserRuleConfiguration(Boolean.TRUE, new CacheOption(128, 1024), new CacheOption(2000, 65535));
-        ruleConfigurations.add(sqlParserRuleConfiguration);
 
         Properties props = new Properties();
         props.setProperty("sql-show", Boolean.TRUE.toString());
@@ -176,6 +170,7 @@ public class Sharding {
 
         result.getAuditors().put("sharding_key_required_auditor", new AlgorithmConfiguration("DML_SHARDING_CONDITIONS", new Properties()));
 
+        /* SHARDINGSPHERE_HINT: DISABLE_AUDIT_NAMES = sharding_key_required_auditor */
         result.setDefaultAuditStrategy(new ShardingAuditStrategyConfiguration(Collections.singleton("sharding_key_required_auditor"), Boolean.TRUE));
         return result;
     }
