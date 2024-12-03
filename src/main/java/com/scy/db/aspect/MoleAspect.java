@@ -189,7 +189,7 @@ public class MoleAspect {
             moleTaskDOMapper.deleteByPrimaryKey(moleTaskDO.getId());
         } catch (Exception e) {
             e.printStackTrace();
-            dataSourceTransactionManager.rollback(transaction);
+            transaction.setRollbackOnly();
         } finally {
             dataSourceTransactionManager.commit(transaction);
         }
